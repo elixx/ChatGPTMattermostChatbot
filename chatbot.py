@@ -42,9 +42,6 @@ logging.basicConfig(level=log_level_root)
 logger = logging.getLogger(__name__)
 logger.setLevel(log_level)
 
-# https://www.youtube.com/watch?v=JWfNLF_g_V0
-# https://github.com/unclecode/crawl4ai/issues/253
-
 tools = [
     {
         "type": "function",

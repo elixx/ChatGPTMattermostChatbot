@@ -293,6 +293,6 @@ def is_model_requiring_new_max_tokens_parameter(model):
 def is_model_supporting_reasoning_parameter(model):
     return (
             model == "o1" or
-            model == "o3-mini" or
+            model.startswith("o3-mini") or
             (model.startswith("o1-") and not (model.startswith("o1-preview") or model.startswith("o1-mini")))
     )
