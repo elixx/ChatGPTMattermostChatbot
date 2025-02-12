@@ -294,5 +294,5 @@ def is_model_supporting_reasoning_parameter(model):
     return (
             model == "o1" or
             model.startswith("o3-mini") or
-            (model.startswith("o1-") and not (model.startswith("o1-preview") or model.startswith("o1-mini")))
+            (model.startswith("o1-") and "preview" not in model and not model.startswith("o1-mini"))
     )
