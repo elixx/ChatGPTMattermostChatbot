@@ -32,7 +32,8 @@ from helpers import (
     timed_lru_cache,
     remove_background_from_image,
     is_model_requiring_new_max_tokens_parameter,
-    is_model_supporting_vision
+    is_model_supporting_vision,
+    is_model_supporting_reasoning_parameter
 )
 from config import *  # pylint: disable=W0401 wildcard-import, unused-wildcard-import
 
@@ -41,6 +42,8 @@ logging.basicConfig(level=log_level_root)
 logger = logging.getLogger(__name__)
 logger.setLevel(log_level)
 
+# https://www.youtube.com/watch?v=JWfNLF_g_V0
+# https://github.com/unclecode/crawl4ai/issues/253
 
 tools = [
     {
@@ -533,6 +536,9 @@ def handle_text_generation(current_message, messages, channel_id, root_id, initi
         model) else {
         "max_tokens": max_tokens}
 
+    reasoning_param = {"reasoning_effort": reasoning_effort} if is_model_supporting_reasoning_parameter(
+        model) else {}
+
     # Send the messages to the AI API
     response = ai_client.chat.completions.create(
         model=model,
@@ -541,7 +547,8 @@ def handle_text_generation(current_message, messages, channel_id, root_id, initi
         temperature=temperature,
         tools=tools if tool_use_enabled else NOT_GIVEN,
         tool_choice="auto" if tool_use_enabled else NOT_GIVEN,  # Let model decide to call the function or not
-        **max_tokens_param
+        **max_tokens_param,
+        **reasoning_param
     )
 
     end_time = time.time()

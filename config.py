@@ -21,6 +21,7 @@ ai_api_baseurl = os.getenv("AI_API_BASEURL", None)
 timeout = int(os.getenv("AI_TIMEOUT", "120"))
 max_tokens = int(os.getenv("MAX_TOKENS", "16384"))
 temperature = float(os.getenv("TEMPERATURE", "1"))
+reasoning_effort = os.environ.get("REASONING_EFFORT", "medium").lower()
 system_prompt_unformatted = os.getenv(
     "AI_SYSTEM_PROMPT",
     """
