@@ -1116,7 +1116,11 @@ async def message_handler(event):
 
 
 def yt_find_preferred_transcript(video_id):
-    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+    try:
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+    except Exception as e:
+        logger.warning(f"Failed to list transcripts for video {video_id}: {str(e)}")
+        return None
 
     # Define the preferred order of transcript types and languages
     preferred_order = [
@@ -1144,13 +1148,18 @@ def yt_find_preferred_transcript(video_id):
 
 def yt_get_transcript(url):
     video_id = yt_extract_video_id(url)
-    preferred_transcript = yt_find_preferred_transcript(video_id)
-
-    if preferred_transcript:
-        transcript = preferred_transcript.fetch()
-        return str(transcript)
-
-    raise Exception("Error getting the YouTube transcript")
+    
+    try:
+        preferred_transcript = yt_find_preferred_transcript(video_id)
+        
+        if preferred_transcript:
+            transcript = preferred_transcript.fetch()
+            return str(transcript)
+        else:
+            return "No transcript available for this video"
+    except Exception as e:
+        logger.warning(f"Failed to fetch transcript for video {video_id}: {str(e)}")
+        return "Transcript unavailable"
 
 
 def yt_get_video_info(url):
