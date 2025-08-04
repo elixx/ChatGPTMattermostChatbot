@@ -1289,30 +1289,49 @@ def request_link_content(link):
     if yt_is_valid_url(link):
         return yt_get_content(link), []
 
-    with httpx.Client() as client:
-        # By doing the redirect itself, we might already allow a local request?
-        with client.stream("GET", link, timeout=4, follow_redirects=True) as response:
-            # Raise for bad status codes if we don't have a FlareSolverr endpoint, this can cause issues though if the requested content is not text
-            if not flaresolverr_endpoint:
-                response.raise_for_status()
+    def try_fetch_with_user_agent(user_agent):
+        headers = {"User-Agent": user_agent}
+        
+        with httpx.Client(headers=headers) as client:
+            # By doing the redirect itself, we might already allow a local request?
+            with client.stream("GET", link, timeout=4, follow_redirects=True) as response:
+                # Raise for bad status codes if we don't have a FlareSolverr endpoint, this can cause issues though if the requested content is not text
+                if not flaresolverr_endpoint:
+                    response.raise_for_status()
 
-            final_url = str(response.url)
+                final_url = str(response.url)
 
-            if not is_valid_url(final_url):
-                logger.info(f"Skipping local/invalid URL {final_url} after redirection: {link}")
-                raise Exception("Local/invalid URL is disallowed")
+                if not is_valid_url(final_url):
+                    logger.info(f"Skipping local/invalid URL {final_url} after redirection: {link}")
+                    raise Exception("Local/invalid URL is disallowed")
 
-            content_type = response.headers.get("content-type", "").lower()
-            if "image/" in content_type:
-                if not is_model_supporting_vision(model):
-                    raise Exception("Image content is not supported for this model")
+                content_type = response.headers.get("content-type", "").lower()
+                if "image/" in content_type:
+                    if not is_model_supporting_vision(model):
+                        raise Exception("Image content is not supported for this model")
 
-                return "", request_link_image_content(response, content_type)
+                    return "", request_link_image_content(response, content_type)
 
-            if "application/pdf" in content_type:
-                return request_link_pdf_content(response)
+                if "application/pdf" in content_type:
+                    return request_link_pdf_content(response)
 
-            return request_link_text_content(link, response, content_type), []
+                return request_link_text_content(link, response, content_type), []
+
+    # Try GoogleBot User-Agent first
+    googlebot_ua = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+    
+    try:
+        content, images = try_fetch_with_user_agent(googlebot_ua)
+        # Check if content is too short (less than 100 characters for text content)
+        if content and len(content.strip()) >= 100:
+            return content, images
+        logger.info(f"GoogleBot UA returned short content ({len(content.strip()) if content else 0} chars), trying fallback UA")
+    except Exception as e:
+        logger.info(f"GoogleBot UA failed: {e}, trying fallback UA")
+    
+    # Fallback to Safari User-Agent
+    safari_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    return try_fetch_with_user_agent(safari_ua)
 
 
 def request_link_pdf_content(prev_response):
