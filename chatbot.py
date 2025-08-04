@@ -1117,7 +1117,7 @@ async def message_handler(event):
 
 def yt_find_preferred_transcript(video_id):
     try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        transcript_list = YouTubeTranscriptApi().list(video_id)
     except Exception as e:
         logger.warning(f"Failed to list transcripts for video {video_id}: {str(e)}")
         return None
