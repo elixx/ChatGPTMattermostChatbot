@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(log_level)
 
 REGEX_LOCAL_LINKS = re.compile(
-    r"(?:^|\b)(127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|[fF][cCdD]00::|\blocalhost\b)(?:$|\b)",
+    r"(?:^|://|@)(127\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+|[fF][cCdD]00::[a-fA-F0-9:]*|localhost)(?:[:/]|$)",
     re.IGNORECASE,
 )
 
@@ -284,7 +284,7 @@ def is_model_supporting_vision(model):
 
 
 def is_model_requiring_new_max_tokens_parameter(model):
-    if model.startswith("o1") or model.startswith("o3"):
+    if model.startswith("o1") or model.startswith("o3") or model == 'gpt-5':
         return True
 
     return False
