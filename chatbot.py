@@ -1245,14 +1245,31 @@ def request_link_text_content(link, prev_response, content_type):
 
     if content_type.startswith(("text/html", "application/xhtml+xml")):
         soup = BeautifulSoup(raw_content, "html.parser")
+        
+        # Extract links and preserve them in the text content
+        for link in soup.find_all('a', href=True):
+            href = link.get('href')
+            text = link.get_text(strip=True)
+            if href and text:
+                # Replace link with text and URL
+                link.replace_with(f"{text} ({href})")
+            elif href:
+                # Link with no text, just show URL
+                link.replace_with(f"({href})")
+        
         website_content = soup.get_text(" | ", strip=True)
 
         tokens = len(model_encoder.encode(website_content))
 
         if tokens > 120000:
             logger.debug("Website text content too large, trying to extract article content only")
-            article_texts = [article.get_text(" | ", strip=True) for article in soup.find_all("article")]
-            website_content = " | ".join(article_texts)
+            article_elements = soup.find_all("article")
+            if article_elements:
+                article_texts = [article.get_text(" | ", strip=True) for article in article_elements]
+                website_content = " | ".join(article_texts)
+            else:
+                # If no articles found, truncate the content
+                website_content = website_content[:400000]  # Rough character limit to stay under token limit
     else:
         website_content = raw_content.strip()
 
